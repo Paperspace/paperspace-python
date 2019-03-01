@@ -8,5 +8,6 @@ from . import networks
 from . import scripts
 from . import templates
 from . import users
+from gradient_statsd import Client as gradient_statsd
 
 __version__ = "0.0.15"

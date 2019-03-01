@@ -32,7 +32,7 @@ setup(
     ],
     keywords='paperspace api development library',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    install_requires=['requests[security]', 'boto3', 'botocore', 'six'],
+    install_requires=['requests[security]', 'boto3', 'botocore', 'six', 'datadog'],
     entry_points={'console_scripts': [
         'paperspace-python = paperspace.main:main',
     ]},

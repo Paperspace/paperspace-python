@@ -1,6 +1,6 @@
 # Paperspace Python Release Notes
 
-## Release Notes for v0.0.19b
+## Release Notes for v0.0.19
 ### New features
 * filtering experiments list with `--projectHandle` 
 * paginating experiments list when does not fit the terminal width

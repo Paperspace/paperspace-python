@@ -269,7 +269,8 @@ def artifactsGet(params, no_logging=False):
 # stream file uploads/downloads
 
 
-def run(params={}, no_logging=False):
+def run(params=None, no_logging=False):
+    params = params or {}
     if 'PS_JOB_RUNNER' in os.environ:
         return
 

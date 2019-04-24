@@ -5,9 +5,10 @@ import re
 
 import click
 
-from paperspace import constants, client, config
+from paperspace import constants, client, config, jobs
 from paperspace.commands import experiments as experiments_commands, deployments as deployments_commands, \
     machines as machines_commands, login as login_commands
+from paperspace.commands.run import RunCommand
 
 
 class ChoiceType(click.Choice):
@@ -1109,3 +1110,55 @@ def logout():
 def version():
     command = login_commands.ShowVersionCommand()
     command.execute()
+
+
+@cli.command("apiKey", help="Set API key")
+@click.argument('key')
+def api_key(key):
+    command = login_commands.ApiKeyCommand()
+    command.execute(key)
+
+
+@cli.command("run")
+@click.option('--help', '-h', 'help')
+@click.option("--script", "script")
+@click.option("--python", "python")
+@click.option("--conda", "conda")
+@click.option('--ignoreFiles', 'ignoreFiles')
+@click.option('--apiKey', 'apiKey')
+@click.option('--container', 'container')
+@click.option('--machineType', 'machineType')
+@click.option('--name', 'name')
+@click.option('--project', 'project')
+@click.option('--projectId', 'projectId')
+@click.option('--command', 'command')
+@click.option('--workspace', 'workspace')
+@click.option('--dataset', 'dataset')
+@click.option('--registryUsername', 'registryUsername')
+@click.option('--registryPassword', 'registryPassword')
+@click.option('--workspaceUsername', 'workspaceUsername')
+@click.option('--workspacePassword', 'workspacePassword')
+@click.option('--cluster', 'cluster')
+@click.option('--clusterId', 'clusterId')
+@click.option('--ports', 'ports')
+@click.option('--isPreemptible', 'isPreemptible')
+@click.option('--useDockerfile', 'useDockerfile')
+@click.option('--buildOnly', 'buildOnly')
+@click.option('--registryTarget', 'registryTarget')
+@click.option('--registryTargetUsername', 'registryTargetUsername')
+@click.option('--registryTargetPassword', 'registryTargetPassword')
+@click.option('--relDockerfilePath', 'relDockerfilePath')
+@click.option('--customMetrics', 'customMetrics')
+@click.option('--modelType', 'modelType')
+@click.option('--modelPath', 'modelPath')
+@click.option('--init', 'init', is_flag=True)
+@click.option('--req', 'req', is_flag=True)
+@click.option('--dryrun', 'dryrun', is_flag=True)
+@click.option('--pipenv', 'pipenv', is_flag=True)
+@click.option('--no_logging', '--nologging', '--noLogging', '--json', 'no_logging', is_flag=True)
+@click.option('-m', 'run_module', is_flag=True)
+@click.option('-c', 'run_command', is_flag=True)
+@click.argument('script_args', nargs=-1)
+def run(script_args, **kwargs):
+    command = RunCommand()
+    command.execute(script_args, **kwargs)

@@ -3,12 +3,12 @@ import sys
 
 from .cli import cli
 from .jobs import run, print_json_pretty
-from .login import set_apikey
 from .version import version
 
 
 def main():
-    if len(sys.argv) >= 2 and sys.argv[1] in ('experiments', 'deployments', 'machines', 'login', 'logout', 'version'):
+    if len(sys.argv) >= 2 and sys.argv[1] in (
+    'experiments', 'deployments', 'machines', 'login', 'logout', 'version', 'apiKey', 'run'):
         cli(sys.argv[1:])
 
     args = sys.argv[:]
@@ -26,13 +26,7 @@ def main():
         usage(prog)
         sys.exit(0)
 
-    if cmd == 'apikey' or cmd == 'apiKey':
-        if not args or args[0] in help_opts:
-            print('usage: %s' % apikey_usage(prog))
-            sys.exit(not args)
-        return not set_apikey(args[0])
-
-    if cmd == 'run':
+    if cmd == '_run':
         if not args or args[0] in help_opts:
             print('run usage: %s' % run_usage(prog))
             sys.exit(not args)
@@ -48,7 +42,8 @@ def main():
                              'project', 'projectId', 'command', 'workspace', 'dataset', 'registryUsername',
                              'registryPassword', 'workspaceUsername', 'workspacePassword', 'cluster', 'clusterId',
                              'ports', 'isPreemptible', 'useDockerfile', 'buildOnly', 'registryTarget',
-                             'registryTargetUsername', 'registryTargetPassword', 'relDockerfilePath', 'customMetrics', 'modelType', 'modelPath']:
+                             'registryTargetUsername', 'registryTargetPassword', 'relDockerfilePath', 'customMetrics',
+                             'modelType', 'modelPath']:
                     if args and not args[0].startswith('--'):
                         params[param] = args.pop(0)
                     else:
@@ -96,7 +91,9 @@ def vers(prog):
 
 
 def login_usage(prog):
-    return format('%s login [[--email] <user@domain.com>] [[--password] "<secretpw>"] [[--apiToken] "<api token name>"]\n       %s logout' % (prog, prog))
+    return format(
+        '%s login [[--email] <user@domain.com>] [[--password] "<secretpw>"] [[--apiToken] "<api token name>"]\n       %s logout' % (
+        prog, prog))
 
 
 def apikey_usage(prog):
@@ -105,16 +102,16 @@ def apikey_usage(prog):
 
 def run_usage(prog):
     return format('%s run [options] [[-m] <script> [args] | -c "python code" | --command "shell cmd"]\n'
-        '    options:\n'
-        '    [--python 2|3]\n'
-        '    [--init [<init.sh>]]\n'
-        '    [--pipenv]\n'
-        '    [--req [<requirements.txt>]]\n'
-        '    [--workspace .|<workspace_path>]\n'
-        '    [--ignoreFiles "<file-or-dir>,..."]\n'
-        '    [jobs create options]\n'
-        '    [--dryrun]\n'
-        '    [-]' % prog)
+                  '    options:\n'
+                  '    [--python 2|3]\n'
+                  '    [--init [<init.sh>]]\n'
+                  '    [--pipenv]\n'
+                  '    [--req [<requirements.txt>]]\n'
+                  '    [--workspace .|<workspace_path>]\n'
+                  '    [--ignoreFiles "<file-or-dir>,..."]\n'
+                  '    [jobs create options]\n'
+                  '    [--dryrun]\n'
+                  '    [-]' % prog)
 
 
 def experiments_usage(prog):

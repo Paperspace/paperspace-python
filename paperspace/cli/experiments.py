@@ -308,3 +308,11 @@ def list_experiments(project_handles, api_key):
 def get_experiment_details(experiment_handle, api_key):
     experiments_api = client.API(config.CONFIG_EXPERIMENTS_HOST, api_key=api_key)
     experiments_commands.get_experiment_details(experiment_handle, api=experiments_api)
+
+
+@experiments.command("delete", help="Delete given experiment")
+@click.argument("experiment-handle")
+@api_key_option
+def delete_experiment(experiment_handle, api_key):
+    experiments_api = client.API(config.CONFIG_EXPERIMENTS_HOST, api_key=api_key)
+    experiments_commands.delete_experiment(experiment_handle, api=experiments_api)

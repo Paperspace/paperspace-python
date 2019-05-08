@@ -68,6 +68,12 @@ def stop_experiment(experiment_handle, api=experiments_api):
     log_response(response, "Experiment stopped", "Unknown error while stopping the experiment")
 
 
+def delete_experiment(experiment_handle, api=experiments_api):
+    url = "/experiments/{}".format(experiment_handle)
+    response = api.delete(url)
+    log_response(response, "Experiment deleted", "Unknown error while deleting the experiment")
+
+
 class ListExperimentsCommand(object):
     def __init__(self, api=experiments_api, logger_=logger):
         self.api = api

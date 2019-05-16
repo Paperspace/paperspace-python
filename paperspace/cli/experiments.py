@@ -235,6 +235,63 @@ def common_experiments_create_single_node_options(f):
     return functools.reduce(lambda x, opt: opt(x), reversed(options), f)
 
 
+def common_experiment_create_hyperopt_options(f):
+    options = [
+        click.option(
+            "--tuningCommand",
+            "tuningCommand",
+            help="Hyperparameter Server command"
+        ),
+        click.option(
+            "--workerContainer",
+            "workerContainer",
+            help="Worker job container"
+        ),
+        click.option(
+            "--workerMachineType",
+            "workerMachineType",
+            help="Worker job machine type"
+        ),
+        click.option(
+            "--workerCommand",
+            "workerCommand",
+            help="Worker job command"
+        ),
+        click.option(
+            "--workerCount",
+            "workerCount",
+            help="Worker jobs count"
+        ),
+        click.option(
+            "--useDockerfile",
+            "useDockerfile",
+            is_flag=True,
+            help="useDockerfile"
+        ),
+        click.option(
+            "--dockerfilePath",
+            "dockerfilePath",
+            help="Dockerfile path"
+        ),
+        click.option(
+            "--hyperparameterServerRegistryUsername",
+            "hyperparameterServerRegistryUsername",
+            help="Hyperparameter Server Registry Username"
+        ),
+        click.option(
+            "--hyperparameterServerRegistryPassword",
+            "hyperparameterServerRegistryPassword",
+            help="Hyperparameter Server Registry Password"
+        ),
+        click.option(
+            "--hyperparameterServerContainerUser",
+            "hyperparameterServerContainerUser",
+            help="hyperparameter Server Container User"
+        ),
+    ]
+    return functools.reduce(lambda x, opt: opt(x), reversed(options), f)
+
+
 @create_experiment.command(name="multinode", help="Create multi node experiment")
 @common_experiments_create_options
 @common_experiment_create_multi_node_options
@@ -307,4 +364,57 @@ def list_experiments(project_ids, api_key):
 @api_key_option
 def get_experiment_details(experiment_id, api_key):
     experiments_api = client.API(config.CONFIG_EXPERIMENTS_HOST, api_key=api_key)
-    experiments_commands.get_experiment_details(experiment_id, api=experiments_api)
+    command = experiments_commands.ExperimentDetailsCommand(api=experiments_api)
+    command.execute(experiment_id)
+
+
+@cli.group("hyperopt", help="Manage hyperopt experiments", cls=ClickGroup)
+def hyperopt():
+    pass
+
+
+@hyperopt.command(name="create", help="Create multi node experiment")
+@common_experiments_create_options
+@common_experiment_create_hyperopt_options
+def create_hyperopt(api_key, **kwargs):
+    kwargs["experimentTypeId"] = constants.ExperimentType.HYPEROPT
+    del_if_value_is_none(kwargs)
+    experiments_api = client.API(config.CONFIG_EXPERIMENTS_HOST, api_key=api_key)
+    command = experiments_commands.CreateHyperoptCommand(api=experiments_api)
+    command.execute(kwargs)
+
+
+@hyperopt.command(name="createAndStart", help="Create multi node experiment")
+@common_experiments_create_options
+@common_experiment_create_hyperopt_options
+def create_and_start_hyperopt(api_key, **kwargs):
+    kwargs["experimentTypeId"] = constants.ExperimentType.HYPEROPT
+    del_if_value_is_none(kwargs)
+    experiments_api = client.API(config.CONFIG_EXPERIMENTS_HOST, api_key=api_key)
+    command = experiments_commands.CreateAndStartHyperoptCommand(api=experiments_api)
+    command.execute(kwargs)
+
+
+@hyperopt.command("start", help="Start experiment")
+@click.argument("experiment-id")
+@api_key_option
+def start_hyperopt(experiment_id, api_key):
+    experiments_api = client.API(config.CONFIG_EXPERIMENTS_HOST, api_key=api_key)
+    experiments_commands.start_experiment(experiment_id, api=experiments_api)
+
+
+@hyperopt.command("stop", help="Start experiment")
+@click.argument("experiment-id")
+@api_key_option
+def stop_hyperopt(experiment_id, api_key):
+    experiments_api = client.API(config.CONFIG_EXPERIMENTS_HOST, api_key=api_key)
+    experiments_commands.stop_experiment(experiment_id, api=experiments_api)
+
+
+@hyperopt.command("details", help="Show detail of an experiment")
+@click.argument("experiment-id")
+@api_key_option
+def get_experiment_details(experiment_id, api_key):
+    experiments_api = client.API(config.CONFIG_EXPERIMENTS_HOST, api_key=api_key)
+    command = experiments_commands.HyperoptDetailsCommand(api=experiments_api)
+    command.execute(experiment_id)

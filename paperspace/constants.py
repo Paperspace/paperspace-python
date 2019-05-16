@@ -2,6 +2,7 @@ class ExperimentType:
     SINGLE_NODE = 1
     GRPC_MULTI_NODE = 2
     MPI_MULTI_NODE = 3
+    HYPEROPT = 4
 
     @classmethod
     def get_type_str(cls, state_int):

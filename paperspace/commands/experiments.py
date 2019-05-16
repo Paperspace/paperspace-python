@@ -28,29 +28,48 @@ class ExperimentCommand(common.CommandBase):
 
 
 class CreateExperimentCommand(ExperimentCommand):
+    experiments_url = "/experiments/"
+    success_message = "New experiment created with ID: {}"
+    error_message = "Unknown error while creating the experiment"
 
     def execute(self, json_):
         workspace_url = self._workspace_handler.upload_workspace(json_)
         if workspace_url:
             json_['workspaceUrl'] = workspace_url
 
-        response = self.api.post("/experiments/", json=json_)
+        response = self.api.post(self.experiments_url, json=json_)
 
         self._log_create_experiment(response,
-                                    "New experiment created with ID: {}",
-                                    "Unknown error while creating the experiment")
+                                    self.success_message,
+                                    self.error_message)
+
+
+class CreateHyperoptCommand(CreateExperimentCommand):
+    experiments_url = "/hyperopt/"
+    success_message = "New hyperopt experiment created with ID: {}"
+    error_message = "Unknown error while creating the hyperopt experiment"
 
 
 class CreateAndStartExperimentCommand(ExperimentCommand):
+    experiments_api = "/experiments/create_and_start/"
+    success_message = "New experiment created and started with ID: {}"
+    error_message = "Unknown error while creating/starting the experiment"
+
     def execute(self, json_):
         workspace_url = self._workspace_handler.upload_workspace(json_)
         if workspace_url:
             json_['workspaceUrl'] = workspace_url
 
-        response = self.api.post("/experiments/create_and_start/", json=json_)
+        response = self.api.post(self.experiments_api, json=json_)
         self._log_create_experiment(response,
-                                    "New experiment created and started with ID: {}",
-                                    "Unknown error while creating/starting the experiment")
+                                    self.success_message,
+                                    self.error_message)
+
+
+class CreateAndStartHyperoptCommand(CreateAndStartExperimentCommand):
+    experiments_api = "/hyperopt/create_and_start/"
+    success_message = "New hyperopt experiment created and started with ID: {}"
+    error_message = "Unknown error while creating/starting the hyperopt experiment"
 
 
 def start_experiment(experiment_id, api=experiments_api):
@@ -59,10 +78,22 @@ def start_experiment(experiment_id, api=experiments_api):
     log_response(response, "Experiment started", "Unknown error while starting the experiment")
 
 
+def start_hypeorpt(experiment_id, api=experiments_api):
+    url = "/hyperopt/{}/start/".format(experiment_id)
+    response = api.put(url)
+    log_response(response, "Hyperopt experiment started", "Unknown error while starting the hyperopt experiment")
+
+
 def stop_experiment(experiment_id, api=experiments_api):
     url = "/experiments/{}/stop/".format(experiment_id)
     response = api.put(url)
     log_response(response, "Experiment stopped", "Unknown error while stopping the experiment")
+
+
+def stop_hyperopt(experiment_id, api=experiments_api):
+    url = "/hyperopt/{}/stop/".format(experiment_id)
+    response = api.put(url)
+    log_response(response, "Hyperopt experiment stopped", "Unknown error while stopping the hyperopt experiment")
 
 
 class ListExperimentsCommand(common.ListCommand):
@@ -148,6 +179,28 @@ def _make_details_table(experiment):
             ("Working Directory", experiment["templateHistory"]["params"].get("workingDirectory")),
             ("Workspace URL", experiment["templateHistory"]["params"].get("workspaceUrl")),
         )
+    elif experiment["experimentTypeId"] == constants.ExperimentType.HYPEROPT:
+        data = (
+            ("Name", experiment["templateHistory"]["params"].get("name")),
+            ("ID", experiment.get("handle")),
+            ("State", constants.ExperimentState.get_state_str(experiment.get("state"))),
+            ("Artifact directory", experiment["templateHistory"]["params"].get("artifactDirectory")),
+            ("Cluster ID", experiment["templateHistory"]["params"].get("clusterId")),
+            ("Experiment Env", experiment["templateHistory"]["params"].get("experimentEnv")),
+            ("Experiment Type",
+             constants.ExperimentType.get_type_str(experiment["templateHistory"]["params"].get("experimentTypeId"))),
+            ("Model Type", experiment["templateHistory"]["params"].get("modelType")),
+            ("Model Path", experiment["templateHistory"]["params"].get("modelPath")),
+            ("Tuning Command", experiment["templateHistory"]["params"].get("tuning_command")),
+            ("Ports", experiment["templateHistory"]["params"].get("ports")),
+            ("Project ID", experiment["templateHistory"]["params"].get("project_handle")),
+            ("Worker Command", experiment["templateHistory"]["params"].get("worker_command")),
+            ("Worker Container", experiment["templateHistory"]["params"].get("worker_container")),
+            ("Worker Count", experiment["templateHistory"]["params"].get("worker_count")),
+            ("Worker Machine Type", experiment["templateHistory"]["params"].get("worker_machine_type")),
+            ("Working Directory", experiment["templateHistory"]["params"].get("workingDirectory")),
+            ("Workspace URL", experiment["templateHistory"]["params"].get("workspaceUrl")),
+        )
     else:
         raise ValueError("Wrong experiment type: {}".format(experiment["experimentTypeId"]))
 
@@ -156,15 +209,22 @@ def _make_details_table(experiment):
     return table_string
 
 
-def get_experiment_details(experiment_id, api=experiments_api):
-    url = "/experiments/{}/".format(experiment_id)
-    response = api.get(url)
-    details = response.content
-    if response.ok:
-        try:
-            experiment = response.json()["data"]
-            details = _make_details_table(experiment)
-        except (ValueError, KeyError) as e:
-            logger.error("Error parsing response data")
+class ExperimentDetailsCommand(ExperimentCommand):
+    endpoint = 'experiments'
 
-    log_response(response, details, "Unknown error while retrieving details of the experiment")
+    def execute(self, experiment_id):
+        url = "/{}/{}/".format(self.endpoint, experiment_id)
+        response = self.api.get(url)
+        details = response.content
+        if response.ok:
+            try:
+                experiment = response.json()["data"]
+                details = _make_details_table(experiment)
+            except (ValueError, KeyError) as e:
+                logger.error("Error parsing response data")
+
+        log_response(response, details, "Unknown error while retrieving details of the experiment")
+
+
+class HyperoptDetailsCommand(ExperimentDetailsCommand):
+    endpoint = 'hyperopt'

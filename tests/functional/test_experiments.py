@@ -691,3 +691,138 @@ class TestStartExperiment(object):
                                             params=None)
 
         assert result.output == self.START_STDOUT
+
+
+class TestHyperoptExperiments(object):
+    BASE_URL = "https://services.paperspace.io/experiments/v1/hyperopt/"
+    EXPECTED_HEADERS_WITH_CHANGED_API_KEY = paperspace.client.default_headers.copy()
+    EXPECTED_HEADERS_WITH_CHANGED_API_KEY["X-API-Key"] = "some_key"
+
+    HYPEROPT_RESPONSE_JSON = {
+        "data": {
+            "dtCreated": "2019-05-16T10:52:32.100586+00:00",
+            "dtDeleted": None,
+            "dtFinished": None,
+            "dtModified": "2019-05-16T10:52:32.100586+00:00",
+            "dtProvisioningFinished": None,
+            "dtProvisioningStarted": None,
+            "dtStarted": None,
+            "dtTeardownFinished": None,
+            "dtTeardownStarted": None,
+            "experimentError": None,
+            "experimentTemplateHistoryId": 119,
+            "experimentTemplateId": 1,
+            "experimentTypeId": 4,
+            "handle": "e6eueci8inbc9",
+            "id": 119,
+            "projectHandle": "pjhandle",
+            "projectId": 1,
+            "started_by_user_id": 1,
+            "state": 1,
+            "templateHistory": {
+                "dtCreated": "2019-05-16T10:52:31.526331+00:00",
+                "dtDeleted": None,
+                "experimentTemplateId": 1,
+                "id": 119,
+                "params": {
+                    "experimentEnv": {
+                        "MAX_STEPS": 100
+                    },
+                    "is_preemptible": False,
+                    "name": "hyper-test",
+                    "ports": "5000:5000",
+                    "project_handle": "pjhandle",
+                    "tuning_command": "pip install -r requirements.txt && python main.py",
+                    "worker_command": "pip install -r requirements.txt && ./run.sh",
+                    "worker_container": "pytorch/pytorch",
+                    "worker_count": 1,
+                    "worker_machine_type": "G1",
+                    "worker_use_dockerfile": False,
+                    "workspaceUrl": "git+https://github.com/Paperspace/distributed-hyperopt"
+                },
+                "triggerEvent": None,
+                "triggerEventId": None
+            }
+        },
+        "message": "success"
+    }
+    HYPEROPT_DETAILS_STDOUT = """+---------------------+--------------------------------------------------------+
+| Name                | hyper-test                                             |
++---------------------+--------------------------------------------------------+
+| ID                  | e6eueci8inbc9                                          |
+| State               | created                                                |
+| Artifact directory  | None                                                   |
+| Cluster ID          | None                                                   |
+| Experiment Env      | {'MAX_STEPS': 100}                                     |
+| Experiment Type     | undefined                                              |
+| Model Type          | None                                                   |
+| Model Path          | None                                                   |
+| Tuning Command      | pip install -r requirements.txt && python main.py      |
+| Ports               | 5000:5000                                              |
+| Project ID          | pjhandle                                               |
+| Worker Command      | pip install -r requirements.txt && ./run.sh            |
+| Worker Container    | pytorch/pytorch                                        |
+| Worker Count        | 1                                                      |
+| Worker Machine Type | G1                                                     |
+| Working Directory   | None                                                   |
+| Workspace URL       | git+https://github.com/Paperspace/distributed-hyperopt |
++---------------------+--------------------------------------------------------+
+"""
+
+    @mock.patch("paperspace.client.requests.post")
+    def test_should_send_post_with_all_params_to_create_hyperopt_experiment(self, post_patched):
+        post_patched.return_value = MockResponse(json_data={"handle": "spoko"}, status_code=200)
+        runner = CliRunner()
+        commands = ["hyperopt", "create",
+                    "--name", "test_name",
+                    "--projectId", "prq70zy79",
+                    "--tuningCommand", "test_tuning_command",
+                    "--workerContainer", "test_container",
+                    "--workerMachineType", "worker_machine_type",
+                    "--workerCommand", "worker_command",
+                    "--workerCount", "worker_count",
+                    "--useDockerfile",
+                    "--dockerfilePath", "path_to_dockerfile",
+                    "--hyperparameterServerRegistryUsername", "registry-username",
+                    "--hyperparameterServerRegistryPassword", "password",
+                    "--hyperparameterServerContainerUser", "container-user",
+                    "--workspaceUrl", 'workspace-url',
+                    "--apiKey", "some_key"
+                    ]
+        expected_parameters = {
+            "tuningCommand": "test_tuning_command",
+            "workerContainer": "test_container",
+            "workerMachineType": "worker_machine_type",
+            "workerCommand": "worker_command",
+            "workerCount": "worker_count",
+            "useDockerfile": True,
+            "dockerfilePath": "path_to_dockerfile",
+            "hyperparameterServerRegistryUsername": "registry-username",
+            "hyperparameterServerRegistryPassword": "password",
+            "hyperparameterServerContainerUser": "container-user",
+            "experimentTypeId": constants.ExperimentType.HYPEROPT,
+            "projectHandle": "prq70zy79",
+            "name": "test_name",
+            "workspaceUrl": "workspace-url"
+        }
+        result = runner.invoke(cli.cli, commands)
+        assert result.exit_code == 0
+        post_patched.assert_called_with(self.BASE_URL, headers=self.EXPECTED_HEADERS_WITH_CHANGED_API_KEY,
+                                        json=expected_parameters,
+                                        params=None,
+                                        files=None)
+
+    @mock.patch("paperspace.client.requests.get")
+    def test_should_send_get_request_and_print_multi_node_experiment_details_in_a_table(self, get_patched):
+        get_patched.return_value = MockResponse(self.HYPEROPT_RESPONSE_JSON, 200, "fake content")
+
+        runner = CliRunner()
+        result = runner.invoke(cli.cli, ["hyperopt", "details", "e6eueci8inbc9", "--apiKey", "some_key"])
+
+        get_patched.assert_called_once_with("{}e6eueci8inbc9/".format(self.BASE_URL),
+                                            headers=self.EXPECTED_HEADERS_WITH_CHANGED_API_KEY,
+                                            json=None,
+                                            params=None)
+
+        assert result.output == self.HYPEROPT_DETAILS_STDOUT
+        assert result.exit_code == 0

@@ -24,9 +24,10 @@ class S3WorkspaceHandler:
         self.logger = logger or default_logger
 
     @staticmethod
-    def _retrieve_file_paths(dir_name, ignored_files=''):
+    def _retrieve_file_paths(dir_name, ignored_files=None):
         # setup file paths variable
         file_paths = {}
+        ignored_files = ignored_files or ''
         ignored_files = ignored_files.split(',')
         exclude = ['.git', '.idea', '.pytest_cache'] + ignored_files
         # Read all directory, subdirectories and file lists
